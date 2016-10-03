@@ -112,7 +112,7 @@ class RestClientTest extends TestCase
         $stackProperty->setAccessible(true);
         $stack = $stackProperty->getValue($handlerStack);
         //Look for the middleware
-        foreach ($stack AS $stackItem) {
+        foreach ($stack as $stackItem) {
             if ($stackItem[1] === 'snorlax-cache' && $stackItem[0] instanceof CacheMiddleware) {
                 return true;
             }
