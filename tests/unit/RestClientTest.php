@@ -106,7 +106,7 @@ class RestClientTest extends TestCase
         //Get the guzzle client to inspect it.
         $originalClient = $restClient->getOriginalClient();
         $handlerStack = $originalClient->getConfig('handler');
-        //The property we need to check is not accesible, make it so.
+        //The property we need to check is not accessible, make it so.
         $reflection = new ReflectionObject($handlerStack);
         $stackProperty = $reflection->getProperty('stack');
         $stackProperty->setAccessible(true);
