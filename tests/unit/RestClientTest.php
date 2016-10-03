@@ -118,6 +118,6 @@ class RestClientTest extends TestCase
             }
         }
         //Middleware does not exist on the stack
-        $this->assertTrue(false, 'No CacheMiddleware named snorlax-cache was found');
+        $this->fail('No CacheMiddleware named snorlax-cache was found');
     }
 }
