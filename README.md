@@ -198,22 +198,6 @@ $client = new Snorlax\RestClient([
 ]);
 ```
 
-# API Authorization
-
-`Snorlax` supports two types of Authorization for now: `Bearer` and `Basic`. They're pretty easy to use.
-
-```php
-<?php
-
-$client = new Snorlax\RestClient([
-    // ...
-]);
-// Basic authorization
-$client->setAuthMethod(new Snorlax\Auth\BasicAuth('user', 'password'));
-// Bearer authorization
-$client->setAuthMethod(new Snorlax\Auth\BearerAuth('your token'));
-```
-
 # Using a custom client
 
 If you don't want to use `Guzzle`'s default client (or want to mock one), `Snorlax` accepts any class that implements `GuzzleHttp\ClientInterface`, so just pass your custom client in the constructor. Can be an instance or a callable.
