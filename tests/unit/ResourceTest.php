@@ -1,6 +1,6 @@
 <?php
 
-use Mockery as m;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
 
 /**
@@ -16,15 +16,12 @@ class ResourceTest extends TestCase
         ]);
         $mock = new Response(200, [], $json);
 
-        $guzzle = m::mock('GuzzleHttp\ClientInterface');
-        $guzzle
-            ->shouldReceive('request')
-            ->with('GET', 'pokemons/', [])
-            ->once()
-            ->andReturn($mock);
+        $guzzle = $this->prophesize(ClientInterface::class);
+        $guzzle->request('GET', 'pokemons/', [])
+            ->willReturn($mock);
 
         $client = $this->getRestClient([
-            'custom' => $guzzle
+            'custom' => $guzzle->reveal()
         ]);
 
         $response = $client->pokemons->all();
@@ -43,15 +40,12 @@ class ResourceTest extends TestCase
         ]);
         $mock = new Response(200, [], $json);
 
-        $guzzle = m::mock('GuzzleHttp\ClientInterface');
-        $guzzle
-            ->shouldReceive('request')
-            ->with('GET', 'pokemons/143', [])
-            ->once()
-            ->andReturn($mock);
+        $guzzle = $this->prophesize(ClientInterface::class);
+        $guzzle->request('GET', 'pokemons/143', [])
+            ->willReturn($mock);
 
         $client = $this->getRestClient([
-            'custom' => $guzzle
+            'custom' => $guzzle->reveal()
         ]);
 
         $response = $client->pokemons->get(143);
@@ -67,15 +61,12 @@ class ResourceTest extends TestCase
     {
         $mock = new Response(201);
 
-        $guzzle = m::mock('GuzzleHttp\ClientInterface');
-        $guzzle
-            ->shouldReceive('request')
-            ->with('POST', 'pokemons/', ['body' => ['pokemon_id' => 143]])
-            ->once()
-            ->andReturn($mock);
+        $guzzle = $this->prophesize(ClientInterface::class);
+        $guzzle->request('POST', 'pokemons/', ['body' => ['pokemon_id' => 143]])
+            ->willReturn($mock);
 
         $client = $this->getRestClient([
-            'custom' => $guzzle
+            'custom' => $guzzle->reveal()
         ]);
 
         $response = $client->pokemons->capture([
@@ -89,15 +80,12 @@ class ResourceTest extends TestCase
     {
         $mock = new Response(204);
 
-        $guzzle = m::mock('GuzzleHttp\ClientInterface');
-        $guzzle
-            ->shouldReceive('request')
-            ->with('PATCH', 'pokemons/143/144/rest', [])
-            ->once()
-            ->andReturn($mock);
+        $guzzle = $this->prophesize(ClientInterface::class);
+        $guzzle->request('PATCH', 'pokemons/143/144/rest', [])
+            ->willReturn($mock);
 
         $client = $this->getRestClient([
-            'custom' => $guzzle
+            'custom' => $guzzle->reveal()
         ]);
 
         $response = $client->pokemons->attack(143, 144, 'rest');
