@@ -1,6 +1,8 @@
 <?php
 
-use Mockery as m;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Client;
+
 use Snorlax\Auth\BearerAuth;
 use Kevinrob\GuzzleCache\CacheMiddleware;
 
@@ -9,10 +11,6 @@ use Kevinrob\GuzzleCache\CacheMiddleware;
  */
 class RestClientTest extends TestCase
 {
-    public function tearDown()
-    {
-        m::close();
-    }
 
     /**
      * Verifies that the constructor correctly sets the resources
@@ -39,14 +37,14 @@ class RestClientTest extends TestCase
      */
     public function testCustomClientWithInstance()
     {
-        $custom_client = m::mock('GuzzleHttp\ClientInterface');
+        $custom_client = $this->prophesize(ClientInterface::class);
 
         $client = $this->getRestClient([
-            'custom' => $custom_client,
+            'custom' => $custom_client->reveal(),
             'params' => []
         ]);
 
-        $this->assertSame($custom_client, $client->getOriginalClient());
+        $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
     }
 
     /**
@@ -54,15 +52,15 @@ class RestClientTest extends TestCase
      */
     public function testCustomClientWithClosure()
     {
-        $custom_client = m::mock('GuzzleHttp\ClientInterface');
+        $custom_client = $this->prophesize(ClientInterface::class);
         $client = $this->getRestClient([
             'custom' => function (array $params) use ($custom_client) {
-                return $custom_client;
+                return $custom_client->reveal();
             },
             'params' => []
         ]);
 
-        $this->assertSame($custom_client, $client->getOriginalClient());
+        $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
     }
 
     /**
@@ -70,17 +68,17 @@ class RestClientTest extends TestCase
      */
     public function testClientWithCacheAndDebug()
     {
-        $custom_client = m::mock('GuzzleHttp\ClientInterface');
+        $custom_client = $this->prophesize(ClientInterface::class);
 
         $client = $this->getRestClient([
-            'custom' => $custom_client,
+            'custom' => $custom_client->reveal(),
             'params' => [
                 'defaults' => ['debug' => true],
                 'cache' => true
             ]
         ]);
 
-        $this->assertSame($custom_client, $client->getOriginalClient());
+        $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
     }
 
     /**
@@ -88,16 +86,28 @@ class RestClientTest extends TestCase
      */
     public function testSetAuthMethod()
     {
-        $custom_client = m::mock('GuzzleHttp\ClientInterface');
-        $custom_client
-            ->shouldReceive('setDefaultOption')
-            ->once()
-            ->with('headers', ['Authorization' => 'Bearer token']);
+        $this->markTestSkipped('The GuzzleHttp 6 don\'t has the setDefaultOption method.');
+    }
 
-        $client = $this->getRestClient([
-            'custom' => $custom_client
-        ]);
-        $client->setAuthMethod(new BearerAuth('token'));
+    public function testClientAddsCacheMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
+    {
+        $restClient = $this->getRestClient(['params' => ['cache' => true]]);
+        //Get the guzzle client to inspect it.
+        $originalClient = $restClient->getOriginalClient();
+        $handlerStack = $originalClient->getConfig('handler');
+        //The property we need to check is not accessible, make it so.
+        $reflection = new ReflectionObject($handlerStack);
+        $stackProperty = $reflection->getProperty('stack');
+        $stackProperty->setAccessible(true);
+        $stack = $stackProperty->getValue($handlerStack);
+        //Look for the middleware
+        foreach ($stack as $stackItem) {
+            if ($stackItem[1] === 'snorlax-cache' && $stackItem[0] instanceof CacheMiddleware) {
+                return true;
+            }
+        }
+        //Middleware does not exist on the stack
+        $this->fail('No CacheMiddleware named snorlax-cache was found');
     }
 
     public function testClientAddsCacheMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()

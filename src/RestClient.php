@@ -151,17 +151,6 @@ class RestClient
     }
 
     /**
-     * Changes the authentication method on all the requests made by this client
-     * @param \Snorlax\Auth\Authorization $auth The authorizaztion method
-     */
-    public function setAuthMethod(Authorization $auth)
-    {
-        $this->client->setDefaultOption('headers', [
-            'Authorization' => sprintf('%s %s', $auth->getAuthType(), $auth->getCredentials())
-        ]);
-    }
-
-    /**
      * Returns the internal client
      * @return \GuzzleHttp\ClientInterface
      */
