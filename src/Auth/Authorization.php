@@ -9,7 +9,7 @@ namespace Snorlax\Auth;
 interface Authorization
 {
     /**
-     * Returns the credentials/token for the Authoritzation header
+     * Returns the credentials/token for the Authorization header
      * @return string
      */
     public function getCredentials();

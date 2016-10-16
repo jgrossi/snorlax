@@ -2,8 +2,6 @@
 
 namespace Snorlax;
 
-use GuzzleHttp\ClientInterface;
-
 /**
  * The mother class of all resources. Contains methods to make dynamic requests
  * defined by the Resource::getActions() method
@@ -11,7 +9,7 @@ use GuzzleHttp\ClientInterface;
 abstract class Resource
 {
     /**
-     * @var GuzzleHttp\ClientInterface
+     * @var RestClient
      */
     protected $client;
 
@@ -22,9 +20,9 @@ abstract class Resource
 
     /**
      * Initializes the client
-     * @param GuzzleHttp\ClientInterface
+     * @param RestClient
      */
-    public function __construct(ClientInterface $client)
+    public function __construct(RestClient $client)
     {
         $this->client = $client;
     }

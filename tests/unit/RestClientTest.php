@@ -81,14 +81,6 @@ class RestClientTest extends TestCase
         $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
     }
 
-    /**
-     * Verifies that the authorization method is set correctly
-     */
-    public function testSetAuthMethod()
-    {
-        $this->markTestSkipped('The GuzzleHttp 6 don\'t has the setDefaultOption method.');
-    }
-
     public function testClientAddsCacheMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
     {
         $restClient = $this->getRestClient(['params' => ['cache' => true]]);
@@ -110,24 +102,42 @@ class RestClientTest extends TestCase
         $this->fail('No CacheMiddleware named snorlax-cache was found');
     }
 
-    public function testClientAddsCacheMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
+    public function testRequestPassesArgumentsToGuzzleClient()
     {
-        $restClient = $this->getRestClient(['params' => ['cache' => true]]);
-        //Get the guzzle client to inspect it.
-        $originalClient = $restClient->getOriginalClient();
-        $handlerStack = $originalClient->getConfig('handler');
-        //The property we need to check is not accessible, make it so.
-        $reflection = new ReflectionObject($handlerStack);
-        $stackProperty = $reflection->getProperty('stack');
-        $stackProperty->setAccessible(true);
-        $stack = $stackProperty->getValue($handlerStack);
-        //Look for the middleware
-        foreach ($stack as $stackItem) {
-            if ($stackItem[1] === 'snorlax-cache' && $stackItem[0] instanceof CacheMiddleware) {
-                return true;
-            }
-        }
-        //Middleware does not exist on the stack
-        $this->fail('No CacheMiddleware named snorlax-cache was found');
+        $method = 'PUT';
+        $uri = '/endpoint';
+        $options = ['body' => '{"key":"value"}'];
+
+        $customClient = $this->createMock('GuzzleHttp\ClientInterface');
+        $customClient->expects($this->once())
+            ->method('request')
+            ->with($method, $uri, $options);
+
+        $restClient = $this->getRestClient(['custom' => $customClient]);
+        $restClient->request($method, $uri, $options);
+    }
+
+    public function testRequestAppliesAuthHeadersWhenAuthorizationSet()
+    {
+        $method = 'PUT';
+        $uri = '/endpoint';
+        $options = [
+            'body' => '{"key":"value"}',
+            'headers' => ['key' => 'value']
+        ];
+
+        $auth = new \Snorlax\Auth\BasicAuth('user', 'password');
+
+        $expectedOptions = $options;
+        $expectedOptions['headers'][] = ['Authorization' => $auth->getAuthType() . ' ' . $auth->getCredentials()];
+
+        $customClient = $this->createMock('GuzzleHttp\ClientInterface');
+        $customClient->expects($this->once())
+            ->method('request')
+            ->with($method, $uri, $expectedOptions);
+
+        $restClient = $this->getRestClient(['custom' => $customClient]);
+        $restClient->setAuthorization($auth);
+        $restClient->request($method, $uri, $options);
     }
 }
