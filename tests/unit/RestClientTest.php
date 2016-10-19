@@ -131,12 +131,10 @@ class RestClientTest extends TestCase
         $expectedOptions = $options;
         $expectedOptions['headers']['Authorization'] = $auth->getAuthType() . ' ' . $auth->getCredentials();
 
-        $customClient = $this->createMock('GuzzleHttp\ClientInterface');
-        $customClient->expects($this->once())
-            ->method('request')
-            ->with($method, $uri, $expectedOptions);
+        $customClient = $this->prophesize('GuzzleHttp\ClientInterface');
+        $customClient->request($method, $uri, $expectedOptions)->shouldBeCalled();
 
-        $restClient = $this->getRestClient(['custom' => $customClient]);
+        $restClient = $this->getRestClient(['custom' => $customClient->reveal()]);
         $restClient->setAuthorization($auth);
         $restClient->request($method, $uri, $options);
     }
