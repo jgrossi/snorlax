@@ -185,7 +185,7 @@ class RestClient
         if ($this->authorization !== null) {
             $authHeader = sprintf('%s %s', $this->authorization->getAuthType(), $this->authorization->getCredentials());
             $headers = isset($options['headers']) ? $options['headers'] : [];
-            $headers[] = ['Authorization' => $authHeader];
+            $headers['Authorization'] = $authHeader;
             $options['headers'] = $headers;
         }
         return $this->client->request($method, $uri, $options);

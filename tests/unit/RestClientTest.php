@@ -129,7 +129,7 @@ class RestClientTest extends TestCase
         $auth = new \Snorlax\Auth\BasicAuth('user', 'password');
 
         $expectedOptions = $options;
-        $expectedOptions['headers'][] = ['Authorization' => $auth->getAuthType() . ' ' . $auth->getCredentials()];
+        $expectedOptions['headers']['Authorization'] = $auth->getAuthType() . ' ' . $auth->getCredentials();
 
         $customClient = $this->createMock('GuzzleHttp\ClientInterface');
         $customClient->expects($this->once())
