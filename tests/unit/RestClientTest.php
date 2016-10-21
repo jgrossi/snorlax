@@ -81,14 +81,6 @@ class RestClientTest extends TestCase
         $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
     }
 
-    /**
-     * Verifies that the authorization method is set correctly
-     */
-    public function testSetAuthMethod()
-    {
-        $this->markTestSkipped('The GuzzleHttp 6 don\'t has the setDefaultOption method.');
-    }
-
     public function testClientAddsCacheMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
     {
         $restClient = $this->getRestClient(['params' => ['cache' => true]]);
@@ -108,5 +100,42 @@ class RestClientTest extends TestCase
         }
         //Middleware does not exist on the stack
         $this->fail('No CacheMiddleware named snorlax-cache was found');
+    }
+
+    public function testRequestPassesArgumentsToGuzzleClient()
+    {
+        $method = 'PUT';
+        $uri = '/endpoint';
+        $options = ['body' => '{"key":"value"}'];
+
+        $customClient = $this->createMock('GuzzleHttp\ClientInterface');
+        $customClient->expects($this->once())
+            ->method('request')
+            ->with($method, $uri, $options);
+
+        $restClient = $this->getRestClient(['custom' => $customClient]);
+        $restClient->request($method, $uri, $options);
+    }
+
+    public function testRequestAppliesAuthHeadersWhenAuthorizationSet()
+    {
+        $method = 'PUT';
+        $uri = '/endpoint';
+        $options = [
+            'body' => '{"key":"value"}',
+            'headers' => ['key' => 'value']
+        ];
+
+        $auth = new \Snorlax\Auth\BasicAuth('user', 'password');
+
+        $expectedOptions = $options;
+        $expectedOptions['headers']['Authorization'] = $auth->getAuthType() . ' ' . $auth->getCredentials();
+
+        $customClient = $this->prophesize('GuzzleHttp\ClientInterface');
+        $customClient->request($method, $uri, $expectedOptions)->shouldBeCalled();
+
+        $restClient = $this->getRestClient(['custom' => $customClient->reveal()]);
+        $restClient->setAuthorization($auth);
+        $restClient->request($method, $uri, $options);
     }
 }

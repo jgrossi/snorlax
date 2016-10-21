@@ -7,6 +7,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\HandlerStack;
 use Illuminate\Support\Collection;
 use Kevinrob\GuzzleCache\CacheMiddleware;
+use Psr\Http\Message\ResponseInterface;
 use Snorlax\Auth\Authorization;
 use Snorlax\Exception\ResourceNotImplemented;
 
@@ -17,17 +18,17 @@ use Snorlax\Exception\ResourceNotImplemented;
 class RestClient
 {
     /**
-     * @var GuzzleHttp\ClientInterface
+     * @var \GuzzleHttp\ClientInterface
      */
     private $client = null;
 
     /**
-     * @var Illuminate\Support\Collection
+     * @var \Illuminate\Support\Collection
      */
     private $resources = null;
 
     /**
-     * @var Illuminate\Support\Collection
+     * @var \Illuminate\Support\Collection
      */
     private $cache;
 
@@ -35,6 +36,9 @@ class RestClient
      * @var array
      */
     private $config = [];
+
+    /** @var Authorization */
+    private $authorization;
 
     /**
      * Initializes configuration parameters and resources
@@ -144,10 +148,19 @@ class RestClient
         if (is_null($instance)) {
             $class = $params['class'];
 
-            $instance = new $class($this->client);
+            $instance = new $class($this);
         }
 
         return $this->cache[$resource] = $instance;
+    }
+
+    /**
+     * Changes the authentication method on all the requests made by this client
+     * @param \Snorlax\Auth\Authorization $auth The authorizaztion method
+     */
+    public function setAuthorization(Authorization $auth)
+    {
+        $this->authorization = $auth;
     }
 
     /**
@@ -157,5 +170,24 @@ class RestClient
     public function getOriginalClient()
     {
         return $this->client;
+    }
+
+    /**
+     * @param string $method HTTP method.
+     * @param string|\Psr\Http\Message\UriInterface $uri URI object or string.
+     * @param array $options Request options to apply.
+     *
+     * @return ResponseInterface
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function request($method, $uri, $options = [])
+    {
+        if ($this->authorization !== null) {
+            $authHeader = sprintf('%s %s', $this->authorization->getAuthType(), $this->authorization->getCredentials());
+            $headers = isset($options['headers']) ? $options['headers'] : [];
+            $headers['Authorization'] = $authHeader;
+            $options['headers'] = $headers;
+        }
+        return $this->client->request($method, $uri, $options);
     }
 }

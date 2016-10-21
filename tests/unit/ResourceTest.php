@@ -50,7 +50,7 @@ class ResourceTest extends TestCase
 
         $response = $client->pokemons->get(143);
 
-        $this->assertEquals((object) [
+        $this->assertEquals((object)[
             'id' => 143,
             'name' => 'Snorlax'
         ], $response->pokemon);
