@@ -2,6 +2,9 @@
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
+use Snorlax\RestClient;
+
+require_once __DIR__ . '\..\fixtures\ResourceWithNumberedParameters.php';
 
 /**
  * Tests for the Snorlax\Resource class. Since it is an abstract class, we need
@@ -91,5 +94,21 @@ class ResourceTest extends TestCase
         $response = $client->pokemons->attack(143, 144, 'rest');
 
         $this->assertEquals($mock, $client->pokemons->getLastResponse());
+    }
+
+    public function testActionParametersReplacedInCorrectOrder()
+    {
+        $first = 1;
+        $second = 2;
+        $expectedPath = "/{$second}?id={$first}";
+
+        $response = new Response(200);
+
+        $client = $this->prophesize(RestClient::class);
+        $client->request('GET', $expectedPath)
+            ->willReturn($response);
+
+        $resource = new ResourceWithNumberedParameters($client->reveal());
+        $resource->get($first, $second);
     }
 }
