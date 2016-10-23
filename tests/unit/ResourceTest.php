@@ -4,7 +4,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
 use Snorlax\RestClient;
 
-require_once __DIR__ . '\..\fixtures\ResourceWithNumberedParameters.php';
+require_once __DIR__ . '/../fixtures/ResourceWithNumberedParameters.php';
 
 /**
  * Tests for the Snorlax\Resource class. Since it is an abstract class, we need
