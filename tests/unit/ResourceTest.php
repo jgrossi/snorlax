@@ -100,12 +100,12 @@ class ResourceTest extends TestCase
     {
         $first = 1;
         $second = 2;
-        $expectedPath = "/{$second}?id={$first}";
+        $expectedPath = "endpoint/{$second}?id={$first}";
 
         $response = new Response(200);
 
         $client = $this->prophesize(RestClient::class);
-        $client->request('GET', $expectedPath)
+        $client->request('GET', $expectedPath, [])
             ->willReturn($response);
 
         $resource = new ResourceWithNumberedParameters($client->reveal());

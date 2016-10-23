@@ -40,9 +40,9 @@ abstract class Resource
         $params = $this->getParams($args);
 
         $this->last_response = $this->client->request($action['method'], $uri, $params);
-        
+
         $response = $this->last_response->getBody();
-        
+
         return $this->parse($method, $response);
     }
 
@@ -54,9 +54,11 @@ abstract class Resource
      */
     private function getPath(array $action, array $args)
     {
-        return preg_match_all('/{(\d+)}/', $action['path'], $matches) ?
-            str_replace($matches[0], $args, $action['path']) :
-            $action['path'];
+        $pattern = '/{(\d+)}/';
+        $callback = function ($matches) use ($args) {
+            return $args[$matches[1]];
+        };
+        return preg_replace_callback($pattern, $callback, $action['path']);
     }
 
     /**
@@ -83,7 +85,7 @@ abstract class Resource
     {
         return $this->last_response;
     }
-    
+
     /**
      * Returns the response parsed, by default as a json-decoded StdObject
      * @param string $method
