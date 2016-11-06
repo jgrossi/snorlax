@@ -49,7 +49,9 @@ class RestClient
         $this->cache = new Collection();
 
         $this->setClient($config);
-        $this->addResources($config['resources'] ?? []);
+        $this->addResources(
+            isset($config['resources']) ? $config['resources'] : []
+        );
     }
 
     /**
@@ -94,8 +96,11 @@ class RestClient
      */
     public function setClient(array $config)
     {
-        $config = $config['client'] ?? $config;
-        $params = $config['params'] ?? [];
+        if (isset($config['client'])) {
+            $config = $config['client'];
+        }
+
+        $params = isset($config['params']) ? $config['params'] : [];
         $client = null;
 
         if (isset($config['custom'])) {
