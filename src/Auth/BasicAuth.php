@@ -4,6 +4,8 @@ namespace Snorlax\Auth;
 
 /**
  * Implementation of Authorization via the basic authorization method on the API
+ *
+ * @package Snorlax\Auth
  */
 class BasicAuth implements Authorization
 {
@@ -17,6 +19,12 @@ class BasicAuth implements Authorization
      */
     private $password;
 
+    /**
+     * BasicAuth constructor.
+     *
+     * @param string $user
+     * @param string $password
+     */
     public function __construct($user, $password)
     {
         $this->user = $user;
