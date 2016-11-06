@@ -5,8 +5,10 @@ namespace Snorlax;
 /**
  * The mother class of all resources. Contains methods to make dynamic requests
  * defined by the Resource::getActions() method
+ *
+ * @package Snorlax
  */
-abstract class Resource
+abstract class RestResource
 {
     /**
      * @var RestClient
@@ -20,6 +22,7 @@ abstract class Resource
 
     /**
      * Initializes the client
+     *
      * @param RestClient
      */
     public function __construct(RestClient $client)
@@ -29,28 +32,32 @@ abstract class Resource
 
     /**
      * Calls the method contained in the actions of this resource
+     *
      * @param string $method
      * @param array $args
+     *
      * @return \StdClass The JSON decoded response
      */
     public function __call($method, $args)
     {
         $action = $this->getActions()[$method];
-        $uri = $this->getBaseUri() . $this->getPath($action, $args);
+        $uri = $this->getBaseUri().$this->getPath($action, $args);
         $params = $this->getParams($args);
 
         $this->last_response = $this->client->request($action['method'], $uri, $params);
 
         $response = $this->last_response->getBody();
 
-        return $this->parse($method, $response);
+        return $this->parse($response);
     }
 
     /**
      * Returns the URI path for the request
+     *
      * @param array $action
      * @param array $args
-     * @param string
+     *
+     * @return mixed
      */
     private function getPath(array $action, array $args)
     {
@@ -58,13 +65,16 @@ abstract class Resource
         $callback = function ($matches) use ($args) {
             return $args[$matches[1]];
         };
+
         return preg_replace_callback($pattern, $callback, $action['path']);
     }
 
     /**
      * Extracts the params from the arguments passed
-     * @param array
-     * @param array
+     *
+     * @param $args array
+     *
+     * @return array
      */
     private function getParams(array $args)
     {
@@ -79,6 +89,7 @@ abstract class Resource
 
     /**
      * Returns the last_response of the last executed request
+     *
      * @return mixed
      */
     public function getLastResponse()
@@ -88,23 +99,26 @@ abstract class Resource
 
     /**
      * Returns the response parsed, by default as a json-decoded StdObject
-     * @param string $method
+     *
      * @param string $response
+     *
      * @return string
      */
-    protected function parse($method, $response)
+    protected function parse($response)
     {
         return json_decode($response);
     }
 
     /**
      * Returns the base URI for every request
+     *
      * @return string
      */
     abstract public function getBaseUri();
 
     /**
      * Returns the actions available for this resource
+     *
      * @return array
      */
     abstract public function getActions();
