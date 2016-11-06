@@ -1,33 +1,42 @@
 <?php
 
-use Snorlax\Resource;
+use Snorlax\RestResource;
 
-class PokemonResource extends Resource
+/**
+ * Class PokemonResource
+ */
+class PokemonResource extends RestResource
 {
+    /**
+     * @return string
+     */
     public function getBaseUri()
     {
         return 'pokemons';
     }
 
+    /**
+     * @return array
+     */
     public function getActions()
     {
         return [
             'all' => [
                 'method' => 'GET',
-                'path' => '/'
+                'path' => '/',
             ],
             'get' => [
                 'method' => 'GET',
-                'path' => '/{0}'
+                'path' => '/{0}',
             ],
             'capture' => [
                 'method' => 'POST',
-                'path' => '/'
+                'path' => '/',
             ],
             'attack' => [
                 'method' => 'PATCH',
-                'path' => '/{0}/{1}/{2}'
-            ]
+                'path' => '/{0}/{1}/{2}',
+            ],
         ];
     }
 }
