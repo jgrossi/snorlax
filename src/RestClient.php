@@ -33,10 +33,7 @@ class RestClient
     private $cache;
 
     /**
-     * @var array
      */
-    private $config = [];
-
     /** @var Authorization */
     private $authorization;
 
@@ -46,7 +43,6 @@ class RestClient
      */
     public function __construct(array $config)
     {
-        $this->config = $config;
         $this->cache = new Collection();
 
         $this->setClient($config);
