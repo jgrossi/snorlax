@@ -14,6 +14,8 @@ use Snorlax\Exception\ResourceNotImplemented;
 /**
  * The REST client.
  * Works as a know it all class that keeps the client and the resources together.
+ *
+ * @package Snorlax
  */
 class RestClient
 {
@@ -33,20 +35,17 @@ class RestClient
     private $cache;
 
     /**
-     * @var array
+     * @var Authorization
      */
-    private $config = [];
-
-    /** @var Authorization */
     private $authorization;
 
     /**
      * Initializes configuration parameters and resources
+     *
      * @param array $config
      */
     public function __construct(array $config)
     {
-        $this->config = $config;
         $this->cache = new Collection();
 
         $this->setClient($config);
@@ -57,7 +56,11 @@ class RestClient
 
     /**
      * Allows us to use $client->resource so we don't need to call
-     * $client->getResource($resource) everytime
+     * $client->getResource($resource) every time
+     *
+     * @param $resource
+     *
+     * @return \Snorlax\Resource
      */
     public function __get($resource)
     {
@@ -66,6 +69,7 @@ class RestClient
 
     /**
      * Appends the given resources to the ones already being used
+     *
      * @param array $resources
      */
     public function addResources(array $resources)
@@ -87,6 +91,7 @@ class RestClient
      * - If no custom client is given, instantiates a new GuzzleHttp\Client
      * - If an instance of GuzzleHttp\ClientInterface is given, we only pass it through
      * - If a closure is given, it gets executed receiving the parameters given
+     *
      * @param array $config
      */
     public function setClient(array $config)
@@ -96,6 +101,8 @@ class RestClient
         }
 
         $params = isset($config['params']) ? $config['params'] : [];
+        $client = null;
+
         if (isset($config['custom'])) {
             if (is_callable($config['custom'])) {
                 $client = $config['custom']($params);
@@ -111,7 +118,9 @@ class RestClient
 
     /**
      * Creates a new default client based on the given parameters
+     *
      * @param array $params
+     *
      * @return \GuzzleHttp\Client
      */
     private function createDefaultClient(array $params)
@@ -129,7 +138,9 @@ class RestClient
 
     /**
      * Instantiates and returns the asked resource.
-     * @param string The resource name
+     *
+     * @param string $resource The resource name
+     *
      * @throws \Snorlax\Exception\ResourceNotImplemented If the resource is not available
      * @return \Snorlax\Resource The instantiated resource
      */
@@ -156,6 +167,7 @@ class RestClient
 
     /**
      * Changes the authentication method on all the requests made by this client
+     *
      * @param \Snorlax\Auth\Authorization $auth The authorizaztion method
      */
     public function setAuthorization(Authorization $auth)
@@ -165,6 +177,7 @@ class RestClient
 
     /**
      * Returns the internal client
+     *
      * @return \GuzzleHttp\ClientInterface
      */
     public function getOriginalClient()
@@ -188,6 +201,7 @@ class RestClient
             $headers['Authorization'] = $authHeader;
             $options['headers'] = $headers;
         }
+
         return $this->client->request($method, $uri, $options);
     }
 }
