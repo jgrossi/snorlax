@@ -2,12 +2,18 @@
 
 namespace Snorlax;
 
+use Concat\Http\Middleware\Logger;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\MessageFormatter;
+use GuzzleHttp\Middleware;
 use Illuminate\Support\Collection;
 use Kevinrob\GuzzleCache\CacheMiddleware;
+use Monolog\Logger as Monolog;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
+
 use Snorlax\Auth\Authorization;
 use Snorlax\Exception\ResourceNotImplemented;
 
@@ -23,6 +29,11 @@ class RestClient
      * @var \GuzzleHttp\ClientInterface
      */
     private $client = null;
+
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    private $logger = null;
 
     /**
      * @var \Illuminate\Support\Collection
@@ -100,6 +111,10 @@ class RestClient
             $config = $config['client'];
         }
 
+        if (isset($config['logger'])) {
+            $this->setLogger($config['logger']);
+        }
+
         $params = isset($config['params']) ? $config['params'] : [];
         $client = null;
 
@@ -113,7 +128,35 @@ class RestClient
             $client = $this->createDefaultClient($params);
         }
 
+
         $this->client = $client;
+    }
+
+    /**
+     * Sets the logger client according to the given parameter following the rules:
+     * - If an instance of Psr\Log\LoggerInterface is given, we only pass it through
+     *
+     * @param array $config
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        if ($logger instanceof LoggerInterface) {
+            return $this->logger = $logger;
+        }
+
+        throw new \Exception("Logger has to be a Psr\Log\LoggerInterface");
+    }
+
+    /**
+     * Instantiates or returns the logger driver.
+     *
+     * @return \Psr\Log\LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger instanceOf LoggerInterface
+            ? $this->logger
+            : new Monolog('Logger');
     }
 
     /**
@@ -126,9 +169,21 @@ class RestClient
     private function createDefaultClient(array $params)
     {
         $stack = HandlerStack::create();
+
         if (isset($params['cache']) && $params['cache'] === true) {
             $middleware = new CacheMiddleware();
             $stack->push($middleware, 'snorlax-cache');
+        }
+
+        if (isset($params['log']) && $params['log'] === true) {
+            $logger = new Logger($this->getLogger());
+            $logger->setRequestLoggingEnabled();
+            $logger->setFormatter(new MessageFormatter(
+                'REQ "{method} {target} HTTP/{version}"',
+                'RES "{method} {target} HTTP/{version}" {code}'
+            ));
+
+            $stack->push($logger, 'snorlax-logger');
         }
 
         $params = array_merge($params, ['handler' => $stack]);
