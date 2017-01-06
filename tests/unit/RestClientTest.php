@@ -196,4 +196,35 @@ class RestClientTest extends TestCase
         $restClient->setAuthorization($auth);
         $restClient->request($method, $uri, $options);
     }
+
+    public function testConfigWithNullLogger()
+    {
+        $customClient = $this->prophesize(ClientInterface::class);
+
+        $client = $this->getRestClient([
+            'custom' => $customClient->reveal(),
+            'params' => [
+                'defaults' => ['debug' => true],
+                'cache' => true,
+            ],
+            'logger' => new \Psr\Log\NullLogger(),
+        ]);
+    }
+
+    /**
+     * @expectedException     \TypeError
+     */
+    public function testConfigWithInvalidLogger()
+    {
+        $customClient = $this->prophesize(ClientInterface::class);
+
+        $client = $this->getRestClient([
+            'custom' => $customClient->reveal(),
+            'params' => [
+                'defaults' => ['debug' => true],
+                'cache' => true,
+            ],
+            'logger' => new stdClass(),
+        ]);
+    }
 }
