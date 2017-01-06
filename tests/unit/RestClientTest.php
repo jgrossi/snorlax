@@ -201,14 +201,18 @@ class RestClientTest extends TestCase
     {
         $customClient = $this->prophesize(ClientInterface::class);
 
+        $nullLogger = new \Psr\Log\NullLogger();
+
         $client = $this->getRestClient([
             'custom' => $customClient->reveal(),
             'params' => [
                 'defaults' => ['debug' => true],
                 'cache' => true,
             ],
-            'logger' => new \Psr\Log\NullLogger(),
+            'logger' => $nullLogger,
         ]);
+
+        $this->assertEquals($client->getLogger(), $nullLogger);
     }
 
     /**
