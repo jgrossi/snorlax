@@ -216,7 +216,7 @@ class RestClientTest extends TestCase
     }
 
     /**
-     * @expectedException     \TypeError
+     * @expectedException     \Throwable
      */
     public function testConfigWithInvalidLogger()
     {
