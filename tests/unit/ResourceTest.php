@@ -38,8 +38,8 @@ class ResourceTest extends TestCase
         $json = json_encode([
             'pokemon' => [
                 'id' => 143,
-                'name' => 'Snorlax'
-            ]
+                'name' => 'Snorlax',
+            ],
         ]);
         $mock = new Response(200, [], $json);
 
@@ -53,9 +53,9 @@ class ResourceTest extends TestCase
 
         $response = $client->pokemons->get(143);
 
-        $this->assertEquals((object)[
+        $this->assertEquals((object) [
             'id' => 143,
-            'name' => 'Snorlax'
+            'name' => 'Snorlax',
         ], $response->pokemon);
         $this->assertEquals($mock, $client->pokemons->getLastResponse());
     }
@@ -73,7 +73,7 @@ class ResourceTest extends TestCase
         ]);
 
         $response = $client->pokemons->capture([
-            'body' => ['pokemon_id' => 143]
+            'body' => ['pokemon_id' => 143],
         ]);
 
         $this->assertEquals($mock, $client->pokemons->getLastResponse());
@@ -88,7 +88,7 @@ class ResourceTest extends TestCase
             ->willReturn($mock);
 
         $client = $this->getRestClient([
-            'custom' => $guzzle->reveal()
+            'custom' => $guzzle->reveal(),
         ]);
 
         $response = $client->pokemons->attack(143, 144, 'rest');

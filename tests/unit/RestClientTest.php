@@ -3,8 +3,9 @@
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Client;
 
-use Snorlax\Auth\BearerAuth;
+use Concat\Http\Middleware\Logger;
 use Kevinrob\GuzzleCache\CacheMiddleware;
+use Snorlax\Auth\BearerAuth;
 
 /**
  * Tests for the Snorlax\RestClient class
@@ -37,14 +38,14 @@ class RestClientTest extends TestCase
      */
     public function testCustomClientWithInstance()
     {
-        $custom_client = $this->prophesize(ClientInterface::class);
+        $customClient = $this->prophesize(ClientInterface::class);
 
         $client = $this->getRestClient([
-            'custom' => $custom_client->reveal(),
-            'params' => []
+            'custom' => $customClient->reveal(),
+            'params' => [],
         ]);
 
-        $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
+        $this->assertSame($customClient->reveal(), $client->getOriginalClient());
     }
 
     /**
@@ -52,15 +53,51 @@ class RestClientTest extends TestCase
      */
     public function testCustomClientWithClosure()
     {
-        $custom_client = $this->prophesize(ClientInterface::class);
+        $customClient = $this->prophesize(ClientInterface::class);
         $client = $this->getRestClient([
-            'custom' => function (array $params) use ($custom_client) {
-                return $custom_client->reveal();
+            'custom' => function (array $params) use ($customClient) {
+                return $customClient->reveal();
             },
-            'params' => []
+            'params' => [],
         ]);
 
-        $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
+        $this->assertSame($customClient->reveal(), $client->getOriginalClient());
+    }
+
+    /**
+     * Verifies that the instance is correctly set with cache, debug and log params
+     */
+    public function testClientWithCacheAndDebugAndLog()
+    {
+        $customClient = $this->prophesize(ClientInterface::class);
+
+        $client = $this->getRestClient([
+            'custom' => $customClient->reveal(),
+            'params' => [
+                'defaults' => ['debug' => true],
+                'cache' => true,
+                'log' => true,
+            ],
+        ]);
+
+        $this->assertSame($customClient->reveal(), $client->getOriginalClient());
+    }
+
+    /**
+     * Verifies that the instance is correctly set with log param
+     */
+    public function testClientWithLog()
+    {
+        $customClient = $this->prophesize(ClientInterface::class);
+
+        $client = $this->getRestClient([
+            'custom' => $customClient->reveal(),
+            'params' => [
+                'log' => true,
+            ],
+        ]);
+
+        $this->assertSame($customClient->reveal(), $client->getOriginalClient());
     }
 
     /**
@@ -68,17 +105,17 @@ class RestClientTest extends TestCase
      */
     public function testClientWithCacheAndDebug()
     {
-        $custom_client = $this->prophesize(ClientInterface::class);
+        $customClient = $this->prophesize(ClientInterface::class);
 
         $client = $this->getRestClient([
-            'custom' => $custom_client->reveal(),
+            'custom' => $customClient->reveal(),
             'params' => [
                 'defaults' => ['debug' => true],
-                'cache' => true
-            ]
+                'cache' => true,
+            ],
         ]);
 
-        $this->assertSame($custom_client->reveal(), $client->getOriginalClient());
+        $this->assertSame($customClient->reveal(), $client->getOriginalClient());
     }
 
     public function testClientAddsCacheMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
@@ -100,6 +137,27 @@ class RestClientTest extends TestCase
         }
         //Middleware does not exist on the stack
         $this->fail('No CacheMiddleware named snorlax-cache was found');
+    }
+
+    public function testClientAddsLogMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
+    {
+        $restClient = $this->getRestClient(['params' => ['log' => true]]);
+        //Get the guzzle client to inspect it.
+        $originalClient = $restClient->getOriginalClient();
+        $handlerStack = $originalClient->getConfig('handler');
+        //The property we need to check is not accessible, make it so.
+        $reflection = new ReflectionObject($handlerStack);
+        $stackProperty = $reflection->getProperty('stack');
+        $stackProperty->setAccessible(true);
+        $stack = $stackProperty->getValue($handlerStack);
+        //Look for the middleware
+        foreach ($stack as $stackItem) {
+            if ($stackItem[1] === 'snorlax-logger' && $stackItem[0] instanceof Logger) {
+                return true;
+            }
+        }
+        //Middleware does not exist on the stack
+        $this->fail('No Logger named snorlax-cache was found');
     }
 
     public function testRequestPassesArgumentsToGuzzleClient()
