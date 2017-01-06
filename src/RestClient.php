@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 
 use Snorlax\Auth\Authorization;
 use Snorlax\Exception\ResourceNotImplemented;
+use Snorlax\Exception\TypeMismatch;
 
 /**
  * The REST client.
@@ -140,11 +141,7 @@ class RestClient
      */
     public function setLogger(LoggerInterface $logger)
     {
-        if ($logger instanceof LoggerInterface) {
-            return $this->logger = $logger;
-        }
-
-        throw new \Exception("Logger has to be a Psr\Log\LoggerInterface");
+        return $this->logger = $logger;
     }
 
     /**

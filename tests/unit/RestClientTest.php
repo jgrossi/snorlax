@@ -214,21 +214,4 @@ class RestClientTest extends TestCase
 
         $this->assertEquals($client->getLogger(), $nullLogger);
     }
-
-    /**
-     * @expectedException     \Throwable
-     */
-    public function testConfigWithInvalidLogger()
-    {
-        $customClient = $this->prophesize(ClientInterface::class);
-
-        $client = $this->getRestClient([
-            'custom' => $customClient->reveal(),
-            'params' => [
-                'defaults' => ['debug' => true],
-                'cache' => true,
-            ],
-            'logger' => new stdClass(),
-        ]);
-    }
 }
