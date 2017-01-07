@@ -196,4 +196,22 @@ class RestClientTest extends TestCase
         $restClient->setAuthorization($auth);
         $restClient->request($method, $uri, $options);
     }
+
+    public function testConfigWithNullLogger()
+    {
+        $customClient = $this->prophesize(ClientInterface::class);
+
+        $nullLogger = new \Psr\Log\NullLogger();
+
+        $client = $this->getRestClient([
+            'custom' => $customClient->reveal(),
+            'params' => [
+                'defaults' => ['debug' => true],
+                'cache' => true,
+            ],
+            'logger' => $nullLogger,
+        ]);
+
+        $this->assertEquals($client->getLogger(), $nullLogger);
+    }
 }
