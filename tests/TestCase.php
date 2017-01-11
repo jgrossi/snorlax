@@ -2,15 +2,15 @@
 
 class TestCase extends PHPUnit_Framework_TestCase
 {
-    public function getRestClient(array $client_config=[])
+    public function getRestClient(array $clientConfig = [])
     {
         $resources = [
-            'pokemons' => PokemonResource::class
+            'pokemons' => PokemonResource::class,
         ];
 
         return new Snorlax\RestClient([
-            'client' => $client_config,
-            'resources' => $resources
+            'client' => $clientConfig,
+            'resources' => $resources,
         ]);
     }
 }
