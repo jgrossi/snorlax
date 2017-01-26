@@ -182,7 +182,11 @@ class RestClient
      */
     public function getLogger()
     {
-        return $this->logger instanceOf LoggerInterface ? $this->logger : new Monolog('Logger');
+        if ($this->logger instanceof LoggerInterface) {
+            return $this->logger;
+        }
+
+        return new Monolog('Logger');
     }
 
     /**
