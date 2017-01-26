@@ -38,7 +38,7 @@ class RestClient
     private $logger = null;
 
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var \Kevinrob\GuzzleCache\Strategy\CacheStrategyInterface
      */
     private $cacheStrategy = null;
 
