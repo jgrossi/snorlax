@@ -237,6 +237,27 @@ $client = new Snorlax\RestClient([
 ]);
 ```
 
+# Using a custom cache strategy & driver
+
+If you don't want to use the `VolatileRuntime` cache driver or even want to change cache strategy, `Snorlax` allow you to inject any of the stragies and storages provided by [kevinrob/guzzle-cache-middleware](https://github.com/Kevinrob/guzzle-cache-middleware#examples).
+
+```php
+<?php
+
+$cacheDriver = \Illuminate\Support\Facades\Cache::store('redis');
+$cacheStorage = new \Kevinrob\GuzzleCache\Storage\LaravelCacheStorage($cacheDriver);
+$cacheStrategy = new \Kevinrob\GuzzleCache\Strategy\PrivateCacheStrategy($cacheStorage);
+
+$client = new Snorlax\RestClient([
+    'client' => [
+        'cacheStrategy' => $cacheStrategy,
+        'params' => [
+            'cache' => true,
+        ],
+    ],
+]);
+```
+
 # Contributing
 Please see the [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for guidelines.
 
