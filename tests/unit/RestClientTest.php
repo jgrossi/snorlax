@@ -5,6 +5,7 @@ use GuzzleHttp\Client;
 
 use Concat\Http\Middleware\Logger;
 use Kevinrob\GuzzleCache\CacheMiddleware;
+use Kevinrob\GuzzleCache\Strategy\CacheStrategyInterface;
 use Snorlax\Auth\BearerAuth;
 
 /**
@@ -166,7 +167,7 @@ class RestClientTest extends TestCase
         $uri = '/endpoint';
         $options = ['body' => '{"key":"value"}'];
 
-        $customClient = $this->createMock('GuzzleHttp\ClientInterface');
+        $customClient = $this->createMock(ClientInterface::class);
         $customClient->expects($this->once())
             ->method('request')
             ->with($method, $uri, $options);
@@ -189,7 +190,7 @@ class RestClientTest extends TestCase
         $expectedOptions = $options;
         $expectedOptions['headers']['Authorization'] = $auth->getAuthType() . ' ' . $auth->getCredentials();
 
-        $customClient = $this->prophesize('GuzzleHttp\ClientInterface');
+        $customClient = $this->prophesize(ClientInterface::class);
         $customClient->request($method, $uri, $expectedOptions)->shouldBeCalled();
 
         $restClient = $this->getRestClient(['custom' => $customClient->reveal()]);
@@ -213,5 +214,22 @@ class RestClientTest extends TestCase
         ]);
 
         $this->assertEquals($client->getLogger(), $nullLogger);
+    }
+
+    public function testConfigWithDefaultCacheStrategy()
+    {
+        $customClient = $this->prophesize(ClientInterface::class);
+        $cacheStrategy = $this->createMock(CacheStrategyInterface::class);
+
+        $client = $this->getRestClient([
+            'custom' => $customClient->reveal(),
+            'params' => [
+                'defaults' => ['debug' => true],
+                'cache' => true,
+            ],
+            'cacheStrategy' => $cacheStrategy,
+        ]);
+
+        $this->assertEquals($client->getcacheStrategy(), $cacheStrategy);
     }
 }

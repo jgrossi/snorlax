@@ -10,6 +10,7 @@ use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use Illuminate\Support\Collection;
 use Kevinrob\GuzzleCache\CacheMiddleware;
+use Kevinrob\GuzzleCache\Strategy\CacheStrategyInterface;
 use Monolog\Logger as Monolog;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -35,6 +36,11 @@ class RestClient
      * @var \Psr\Log\LoggerInterface
      */
     private $logger = null;
+
+    /**
+     * @var \Kevinrob\GuzzleCache\Strategy\CacheStrategyInterface
+     */
+    private $cacheStrategy = null;
 
     /**
      * @var \Illuminate\Support\Collection
@@ -116,6 +122,10 @@ class RestClient
             $this->setLogger($config['logger']);
         }
 
+        if (isset($config['cacheStrategy'])) {
+            $this->setCacheStrategy($config['cacheStrategy']);
+        }
+
         $params = isset($config['params']) ? $config['params'] : [];
         $client = null;
 
@@ -134,10 +144,31 @@ class RestClient
     }
 
     /**
+    * Sets the logger client according to the given parameter following the rules:
+     * - If an instance of CacheStrategyInterface is given, we only pass it through
+     *
+     * @param CacheStrategyInterface $cacheStrategy
+     */
+    public function setCacheStrategy(CacheStrategyInterface $cacheStrategy)
+    {
+        return $this->cacheStrategy = $cacheStrategy;
+    }
+
+    /**
+     * Instantiates or returns the cache middleware.
+     *
+     * @return \Psr\Log\LoggerInterface
+     */
+    public function getCacheStrategy()
+    {
+        return $this->cacheStrategy ?: null;
+    }
+
+    /**
      * Sets the logger client according to the given parameter following the rules:
      * - If an instance of Psr\Log\LoggerInterface is given, we only pass it through
      *
-     * @param array $config
+     * @param LoggerInterface $logger
      */
     public function setLogger(LoggerInterface $logger)
     {
@@ -151,7 +182,11 @@ class RestClient
      */
     public function getLogger()
     {
-        return $this->logger instanceOf LoggerInterface ? $this->logger : new Monolog('Logger');
+        if ($this->logger instanceof LoggerInterface) {
+            return $this->logger;
+        }
+
+        return new Monolog('Logger');
     }
 
     /**
@@ -166,8 +201,9 @@ class RestClient
         $stack = HandlerStack::create();
 
         if (isset($params['cache']) && $params['cache'] === true) {
-            $middleware = new CacheMiddleware();
-            $stack->push($middleware, 'snorlax-cache');
+            $cache = new CacheMiddleware($this->getCacheStrategy());
+
+            $stack->push($cache, 'snorlax-cache');
         }
 
         if (isset($params['log']) && $params['log'] === true) {
