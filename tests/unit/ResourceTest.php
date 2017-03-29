@@ -105,6 +105,7 @@ class ResourceTest extends TestCase
         $response = new Response(200);
 
         $client = $this->prophesize(RestClient::class);
+        $client->getAsync()->shouldBeCalled();
         $client->request('GET', $expectedPath, [])
             ->willReturn($response);
 

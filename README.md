@@ -12,10 +12,10 @@ A light-weight RESTful client built on top of [Guzzle](http://docs.guzzlephp.org
 ```php
 <?php
 
-use Snorlax\Resource;
+use Snorlax\RestResource;
 use Snorlax\RestClient;
 
-class PokemonResource extends Resource
+class PokemonResource extends RestResource
 {
     public function getBaseUri()
     {
@@ -256,7 +256,61 @@ $client = new Snorlax\RestClient([
         ],
     ],
 ]);
+`
+
+# Using parallel requests
+
+The parallel pool is made on the top of Guzzle, because of that, you should be using Guzzle.
+
 ```
+use Snorlax\RestClient;
+use Snorlax\RestPool;
+use Snorlax\RestResource;
+
+class PostResource extends RestResource
+{
+    public function getBaseUri()
+    {
+        return 'https://jsonplaceholder.typicode.com/posts';
+    }
+
+    public function getActions()
+    {
+        return [
+            'all' => [
+                'method' => 'GET',
+                'path' => '/',
+            ],
+        ];
+    }
+}
+
+$client = new RestClient([
+    'resources' => [
+        'posts' => PostResource::class,
+    ],
+]);
+
+$pool = new RestPool();
+
+$pool->addResource('postsByUserOne', $client, 'posts.all', [
+    'query' => [
+        'userId' => '1',
+        'cache' => rand(11111, 99999), // bypass cache
+    ],
+]);
+
+$pool->addResource('postsByUserTwo', $client, 'posts.all', [
+    'query' => [
+        'userId' => '2',
+        'cache' => rand(11111, 99999), // bypass cache
+    ],
+]);
+
+$resquests = $pool->send();
+```
+
+The result of `$requests` is a `StdClass` with `postsByUserOne` and `postsByUserTwo` as properties. 
 
 # Contributing
 Please see the [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for guidelines.

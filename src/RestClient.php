@@ -17,7 +17,6 @@ use Psr\Log\LoggerInterface;
 
 use Snorlax\Auth\Authorization;
 use Snorlax\Exception\ResourceNotImplemented;
-use Snorlax\Exception\TypeMismatch;
 
 /**
  * The REST client.
@@ -56,6 +55,11 @@ class RestClient
      * @var Authorization
      */
     private $authorization;
+
+    /**
+     * @var Bool
+     */
+    private $async = false;
 
     /**
      * Initializes configuration parameters and resources
@@ -242,6 +246,7 @@ class RestClient
 
         $params = $this->resources->get($resource);
         $instance = $params['instance'];
+
         if (is_null($instance)) {
             $class = $params['class'];
 
@@ -288,6 +293,32 @@ class RestClient
             $options['headers'] = $headers;
         }
 
+        if ($this->getAsync()) {
+            return $this->client->requestAsync($method, $uri, $options);
+        }
+
         return $this->client->request($method, $uri, $options);
+    }
+
+    /**
+     * Make the instance async
+     *
+     * @return RestClient
+     */
+    public function setAsync($flag = true)
+    {
+        $this->async = $flag;
+
+        return $this;
+    }
+
+    /**
+     * Return is current state is async
+     *
+     * @return Bool
+     */
+    public function getAsync()
+    {
+        return $this->async;
     }
 }

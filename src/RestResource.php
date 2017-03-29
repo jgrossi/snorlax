@@ -43,8 +43,15 @@ abstract class RestResource
         $action = $this->getActions()[$method];
         $uri = $this->getBaseUri().$this->getPath($action, $args);
         $params = $this->getParams($args);
+        $request = $this->client->request($action['method'], $uri, $params);
 
-        $this->last_response = $this->client->request($action['method'], $uri, $params);
+        if ($this->client->getAsync()) {
+            $this->client->setAsync(false);
+
+            return $request;
+        }
+
+        $this->last_response = $request;
 
         $response = $this->last_response->getBody();
 
