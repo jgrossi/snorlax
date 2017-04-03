@@ -256,13 +256,14 @@ $client = new Snorlax\RestClient([
         ],
     ],
 ]);
-`
+```
 
 # Using parallel requests
 
 The parallel pool is made on the top of Guzzle, because of that, you should be using Guzzle.
 
-```
+```php
+<?php
 use Snorlax\RestClient;
 use Snorlax\RestPool;
 use Snorlax\RestResource;
