@@ -44,6 +44,16 @@ class RestPool
     {
         list($resource, $method) = $this->explodeRoute($route);
 
+        if (array_key_exists('parameters', $params)) {
+            $parameters = $params['parameters'];
+            unset($params['parameters']);
+
+            return call_user_func_array(
+                [ $client->setAsync()->{$resource}, $method ],
+                array_merge($parameters, [$params])
+            );
+        }
+
         return $client->setAsync()->{$resource}->{$method}($params);
     }
 

@@ -282,6 +282,10 @@ class PostResource extends RestResource
                 'method' => 'GET',
                 'path' => '/',
             ],
+            'show' => [
+                'method' => 'GET',
+                'path' => '/{0}',
+            ],
         ];
     }
 }
@@ -301,17 +305,20 @@ $pool->addResource('postsByUserOne', $client, 'posts.all', [
     ],
 ]);
 
-$pool->addResource('postsByUserTwo', $client, 'posts.all', [
+$pool->addResource('postsByUserTwo', $client, 'posts.show', [
+    'parameters' => [
+        2
+    ],
     'query' => [
         'userId' => '2',
         'cache' => rand(11111, 99999), // bypass cache
     ],
 ]);
 
-$resquests = $pool->send();
+$requests = $pool->send();
 ```
 
-The result of `$requests` is a `StdClass` with `postsByUserOne` and `postsByUserTwo` as properties. 
+The result of `$requests` is a `StdClass` with `postsByUserOne` and `postsByUserTwo` as properties.
 
 # Contributing
 Please see the [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for guidelines.
