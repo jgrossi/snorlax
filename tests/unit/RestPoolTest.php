@@ -18,16 +18,35 @@ class RestPoolTest extends TestCase
         $promise = $this->prophesize(PromiseInterface::class);
         $promise->wait()->willReturn($response->reveal());
 
-        $filteredParameters = [
+        $allParameters = [
+            'query' => [
+                'userId' => '1',
+            ],
+        ];
+
+        $getParameters = [
+            'parameters' => [
+                2
+            ],
+        ];
+
+        $attackParameters = [
+            'parameters' => [
+                1,
+                2,
+                3,
+            ],
             'query' => [
                 'userId' => '1',
             ],
         ];
 
         $guzzle = $this->prophesize(ClientInterface::class);
-        $guzzle->requestAsync('GET', 'pokemons/', [])
+        $guzzle->requestAsync('GET', 'pokemons/', ['query' => ['userId' => '1']])
             ->willReturn($promise->reveal());
-        $guzzle->requestAsync('GET', 'pokemons/', $filteredParameters)
+        $guzzle->requestAsync('GET', 'pokemons/2', [])
+            ->willReturn($promise->reveal());
+        $guzzle->requestAsync('PATCH', 'pokemons/1/2/3', ['query' => ['userId' => '1']])
             ->willReturn($promise->reveal());
 
         $client = $this->getRestClient([
@@ -35,8 +54,9 @@ class RestPoolTest extends TestCase
         ]);
 
         $pool = new RestPool();
-        $pool->addResource('pokemonsAll', $client, 'pokemons.all');
-        $pool->addResource('pokemonsFiltered', $client, 'pokemons.all', $filteredParameters);
+        $pool->addResource('pokemonsAll', $client, 'pokemons.all', $allParameters);
+        $pool->addResource('pokemonsGet', $client, 'pokemons.get', $getParameters);
+        $pool->addResource('pokemonsAttack', $client, 'pokemons.attack', $attackParameters);
         $pool->send();
     }
 
