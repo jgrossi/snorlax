@@ -320,6 +320,23 @@ $requests = $pool->send();
 
 The result of `$requests` is a `StdClass` with `postsByUserOne` and `postsByUserTwo` as properties.
 
+# Reconnections
+
+Is possible to reconnect when Guzzle throws a `GuzzleHttp\Exception\ConnectException`. By default, `Snorlax` tries to reconnect 3 times.
+
+If you want, you can change the number of tries with the `retries` parameter.
+
+```php
+<?php
+
+$pokemons = $client->pokemons->all([
+    'retries' => 3,
+    'query' => [
+        'limit' => 150,
+    ],
+]);
+```
+
 # Contributing
 Please see the [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for guidelines.
 

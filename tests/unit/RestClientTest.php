@@ -1,11 +1,13 @@
 <?php
 
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Client;
-
 use Concat\Http\Middleware\Logger;
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\ConnectException;
 use Kevinrob\GuzzleCache\CacheMiddleware;
 use Kevinrob\GuzzleCache\Strategy\CacheStrategyInterface;
+use Psr\Http\Message\RequestInterface;
+
 use Snorlax\Auth\BearerAuth;
 
 /**
@@ -15,6 +17,7 @@ class RestClientTest extends TestCase
 {
 
     /**
+     * @test
      * Verifies that the constructor correctly sets the resources
      */
     public function testResourcesGetter()
@@ -26,6 +29,7 @@ class RestClientTest extends TestCase
     }
 
     /**
+     * @test
      * @expectedException \Snorlax\Exception\ResourceNotImplemented
      * @expectedExceptionMessage Resource "digimons" is not implemented
      */
@@ -35,6 +39,7 @@ class RestClientTest extends TestCase
     }
 
     /**
+     * @test
      * Verifies that the custom instance passed through the constructor is set
      */
     public function testCustomClientWithInstance()
@@ -50,6 +55,7 @@ class RestClientTest extends TestCase
     }
 
     /**
+     * @test
      * Verifies that the custom closure gets executed when client is created
      */
     public function testCustomClientWithClosure()
@@ -66,6 +72,7 @@ class RestClientTest extends TestCase
     }
 
     /**
+     * @test
      * Verifies that the instance is correctly set with cache, debug and log params
      */
     public function testClientWithCacheAndDebugAndLog()
@@ -85,6 +92,7 @@ class RestClientTest extends TestCase
     }
 
     /**
+     * @test
      * Verifies that the instance is correctly set with log param
      */
     public function testClientWithLog()
@@ -102,6 +110,7 @@ class RestClientTest extends TestCase
     }
 
     /**
+     * @test
      * Verifies that the instance is correctly set with cache and debug params
      */
     public function testClientWithCacheAndDebug()
@@ -119,6 +128,9 @@ class RestClientTest extends TestCase
         $this->assertSame($customClient->reveal(), $client->getOriginalClient());
     }
 
+    /**
+     * @test
+     */
     public function testClientAddsCacheMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
     {
         $restClient = $this->getRestClient(['params' => ['cache' => true]]);
@@ -140,6 +152,9 @@ class RestClientTest extends TestCase
         $this->fail('No CacheMiddleware named snorlax-cache was found');
     }
 
+    /**
+     * @test
+     */
     public function testClientAddsLogMiddlewareToHandlerStackWhenNoCustomClientProvidedAndCacheEnabled()
     {
         $restClient = $this->getRestClient(['params' => ['log' => true]]);
@@ -161,11 +176,14 @@ class RestClientTest extends TestCase
         $this->fail('No Logger named snorlax-cache was found');
     }
 
+    /**
+     * @test
+     */
     public function testRequestPassesArgumentsToGuzzleClient()
     {
         $method = 'PUT';
         $uri = '/endpoint';
-        $options = ['body' => '{"key":"value"}'];
+        $options = ['body' => '{"key":"value"}', 'retries' => 3];
 
         $customClient = $this->createMock(ClientInterface::class);
         $customClient->expects($this->once())
@@ -176,19 +194,24 @@ class RestClientTest extends TestCase
         $restClient->request($method, $uri, $options);
     }
 
+    /**
+     * @test
+     */
     public function testRequestAppliesAuthHeadersWhenAuthorizationSet()
     {
         $method = 'PUT';
         $uri = '/endpoint';
         $options = [
             'body' => '{"key":"value"}',
-            'headers' => ['key' => 'value']
+            'headers' => ['key' => 'value'],
+            'retries' => 10,
         ];
 
         $auth = new \Snorlax\Auth\BasicAuth('user', 'password');
 
         $expectedOptions = $options;
         $expectedOptions['headers']['Authorization'] = $auth->getAuthType() . ' ' . $auth->getCredentials();
+        $expectedOptions['retries'] = 10;
 
         $customClient = $this->prophesize(ClientInterface::class);
         $customClient->request($method, $uri, $expectedOptions)->shouldBeCalled();
@@ -198,6 +221,9 @@ class RestClientTest extends TestCase
         $restClient->request($method, $uri, $options);
     }
 
+    /**
+     * @test
+     */
     public function testConfigWithNullLogger()
     {
         $customClient = $this->prophesize(ClientInterface::class);
@@ -216,6 +242,9 @@ class RestClientTest extends TestCase
         $this->assertEquals($client->getLogger(), $nullLogger);
     }
 
+    /**
+     * @test
+     */
     public function testConfigWithDefaultCacheStrategy()
     {
         $customClient = $this->prophesize(ClientInterface::class);
@@ -231,5 +260,45 @@ class RestClientTest extends TestCase
         ]);
 
         $this->assertEquals($client->getcacheStrategy(), $cacheStrategy);
+    }
+
+    /**
+     * @test
+     */
+    public function testAutoReconnect()
+    {
+        $method = 'GET';
+        $uri = '/';
+        $options = ['retries' => 2];
+
+        $exception = $this->prophesize(ConnectException::class);
+
+        $customClient = $this->prophesize(ClientInterface::class);
+        $customClient->request($method, $uri, $options)->willThrow($exception->reveal());
+        $customClient->request($method, $uri, ['retries' => 1])->shouldBeCalled();
+
+        $restClient = $this->getRestClient(['custom' => $customClient->reveal()]);
+        $restClient->request($method, $uri, $options);
+    }
+
+    /**
+     * @test
+     * @expectedException \GuzzleHttp\Exception\ConnectException
+     */
+    public function testThrowConnectExceptionWhenRetriesIsOver()
+    {
+        $method = 'GET';
+        $uri = '/';
+        $options = ['retries' => 1];
+
+        $request = $this->prophesize(RequestInterface::class);
+        $exception = new ConnectException('foo', $request->reveal());
+
+        $customClient = $this->prophesize(ClientInterface::class);
+        $customClient->request($method, $uri, $options)->willThrow($exception);
+        $customClient->request($method, $uri, ['retries' => 0])->willThrow($exception);
+
+        $restClient = $this->getRestClient(['custom' => $customClient->reveal()]);
+        $restClient->request($method, $uri, $options);
     }
 }

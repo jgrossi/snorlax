@@ -20,7 +20,7 @@ class ResourceTest extends TestCase
         $mock = new Response(200, [], $json);
 
         $guzzle = $this->prophesize(ClientInterface::class);
-        $guzzle->request('GET', 'pokemons/', [])
+        $guzzle->request('GET', 'pokemons/', ['retries' => 3])
             ->willReturn($mock);
 
         $client = $this->getRestClient([
@@ -44,7 +44,7 @@ class ResourceTest extends TestCase
         $mock = new Response(200, [], $json);
 
         $guzzle = $this->prophesize(ClientInterface::class);
-        $guzzle->request('GET', 'pokemons/143', [])
+        $guzzle->request('GET', 'pokemons/143', ['retries' => 3])
             ->willReturn($mock);
 
         $client = $this->getRestClient([
@@ -65,7 +65,7 @@ class ResourceTest extends TestCase
         $mock = new Response(201);
 
         $guzzle = $this->prophesize(ClientInterface::class);
-        $guzzle->request('POST', 'pokemons/', ['body' => ['pokemon_id' => 143]])
+        $guzzle->request('POST', 'pokemons/', ['body' => ['pokemon_id' => 143], 'retries' => 3])
             ->willReturn($mock);
 
         $client = $this->getRestClient([
@@ -84,7 +84,7 @@ class ResourceTest extends TestCase
         $mock = new Response(204);
 
         $guzzle = $this->prophesize(ClientInterface::class);
-        $guzzle->request('PATCH', 'pokemons/143/144/rest', [])
+        $guzzle->request('PATCH', 'pokemons/143/144/rest', ['retries' => 3])
             ->willReturn($mock);
 
         $client = $this->getRestClient([

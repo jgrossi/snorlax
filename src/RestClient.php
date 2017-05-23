@@ -5,6 +5,8 @@ namespace Snorlax;
 use Concat\Http\Middleware\Logger;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
@@ -60,6 +62,11 @@ class RestClient
      * @var Bool
      */
     private $async = false;
+
+    /**
+     * @var Integer
+     */
+    private $maxRetries = 3;
 
     /**
      * Initializes configuration parameters and resources
@@ -282,7 +289,6 @@ class RestClient
      * @param array $options Request options to apply.
      *
      * @return ResponseInterface
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function request($method, $uri, $options = [])
     {
@@ -293,11 +299,38 @@ class RestClient
             $options['headers'] = $headers;
         }
 
-        if ($this->getAsync()) {
-            return $this->client->requestAsync($method, $uri, $options);
+        if (!isset($options['retries'])) {
+            $options['retries'] = $this->maxRetries;
         }
 
-        return $this->client->request($method, $uri, $options);
+        return $this->requestHub($method, $uri, $options);
+    }
+
+    /**
+     * @param string $method HTTP method.
+     * @param string|\Psr\Http\Message\UriInterface $uri URI object or string.
+     * @param array $options Request options to apply.
+     *
+     * @return ResponseInterface
+     * @throws ConnectException
+     */
+    private function requestHub($method, $uri, $options)
+    {
+        try {
+            if ($this->getAsync()) {
+                return $this->client->requestAsync($method, $uri, $options);
+            }
+
+            return $this->client->request($method, $uri, $options);
+        } catch (ConnectException $e) {
+            if ($options['retries'] > 0) {
+                --$options['retries'];
+
+                return $this->requestHub($method, $uri, $options);
+            }
+
+            throw new ConnectException($e->getMessage(), $e->getRequest(), null, $e->getHandlerContext());
+        }
     }
 
     /**

@@ -42,11 +42,11 @@ class RestPoolTest extends TestCase
         ];
 
         $guzzle = $this->prophesize(ClientInterface::class);
-        $guzzle->requestAsync('GET', 'pokemons/', ['query' => ['userId' => '1']])
+        $guzzle->requestAsync('GET', 'pokemons/', ['query' => ['userId' => '1'], 'retries' => 3])
             ->willReturn($promise->reveal());
-        $guzzle->requestAsync('GET', 'pokemons/2', [])
+        $guzzle->requestAsync('GET', 'pokemons/2', ['retries' => 3])
             ->willReturn($promise->reveal());
-        $guzzle->requestAsync('PATCH', 'pokemons/1/2/3', ['query' => ['userId' => '1']])
+        $guzzle->requestAsync('PATCH', 'pokemons/1/2/3', ['query' => ['userId' => '1'], 'retries' => 3])
             ->willReturn($promise->reveal());
 
         $client = $this->getRestClient([
