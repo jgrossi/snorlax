@@ -16,6 +16,7 @@ use Kevinrob\GuzzleCache\Strategy\CacheStrategyInterface;
 use Monolog\Logger as Monolog;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 
 use Snorlax\Auth\Authorization;
 use Snorlax\Exception\ResourceNotImplemented;
@@ -219,6 +220,7 @@ class RestClient
 
         if (isset($params['log']) && $params['log'] === true) {
             $logger = new Logger($this->getLogger());
+            $logger->setLogLevel(LogLevel::DEBUG);
             $logger->setRequestLoggingEnabled();
             $logger->setFormatter(new MessageFormatter(
                 'REQ "{method} {target} HTTP/{version}"',
