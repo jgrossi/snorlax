@@ -12,7 +12,6 @@
     "require": {
         "php": ">=5.5.9",
         "guzzlehttp/guzzle": "~6.1",
-        "illuminate/support": "^5.1",
         "monolog/monolog": "^1.21",
         "kevinrob/guzzle-cache-middleware": "^1.0",
         "rtheunissen/guzzle-log-middleware": "^0.4.0"

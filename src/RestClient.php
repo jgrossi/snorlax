@@ -6,18 +6,14 @@ use Concat\Http\Middleware\Logger;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
-use GuzzleHttp\Middleware;
-use Illuminate\Support\Collection;
 use Kevinrob\GuzzleCache\CacheMiddleware;
 use Kevinrob\GuzzleCache\Strategy\CacheStrategyInterface;
 use Monolog\Logger as Monolog;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-
 use Snorlax\Auth\Authorization;
 use Snorlax\Exception\ResourceNotImplemented;
 
@@ -45,14 +41,14 @@ class RestClient
     private $cacheStrategy = null;
 
     /**
-     * @var \Illuminate\Support\Collection
+     * @var array
      */
-    private $resources = null;
+    private $resources = [];
 
     /**
-     * @var \Illuminate\Support\Collection
+     * @var array
      */
-    private $cache;
+    private $cache = [];
 
     /**
      * @var Authorization
@@ -76,8 +72,6 @@ class RestClient
      */
     public function __construct(array $config)
     {
-        $this->cache = new Collection();
-
         $this->setClient($config);
         $this->addResources(
             isset($config['resources']) ? $config['resources'] : []
@@ -104,15 +98,11 @@ class RestClient
      */
     public function addResources(array $resources)
     {
-        if (!($this->resources instanceof Collection)) {
-            $this->resources = new Collection();
-        }
-
         foreach ($resources as $resource => $class) {
-            $this->resources->put($resource, [
+            $this->resources[$resource] = [
                 'instance' => null,
-                'class' => $class
-            ]);
+                'class' => $class,
+            ];
         }
     }
 
@@ -156,10 +146,11 @@ class RestClient
     }
 
     /**
-    * Sets the logger client according to the given parameter following the rules:
+     * Sets the logger client according to the given parameter following the rules:
      * - If an instance of CacheStrategyInterface is given, we only pass it through
      *
      * @param CacheStrategyInterface $cacheStrategy
+     * @return CacheStrategyInterface
      */
     public function setCacheStrategy(CacheStrategyInterface $cacheStrategy)
     {
@@ -169,7 +160,7 @@ class RestClient
     /**
      * Instantiates or returns the cache middleware.
      *
-     * @return \Psr\Log\LoggerInterface
+     * @return CacheStrategyInterface|LoggerInterface
      */
     public function getCacheStrategy()
     {
@@ -181,6 +172,7 @@ class RestClient
      * - If an instance of Psr\Log\LoggerInterface is given, we only pass it through
      *
      * @param LoggerInterface $logger
+     * @return LoggerInterface
      */
     public function setLogger(LoggerInterface $logger)
     {
@@ -245,15 +237,15 @@ class RestClient
      */
     public function getResource($resource)
     {
-        if ($this->cache->has($resource)) {
-            return $this->cache->get($resource);
+        if (array_key_exists($resource, $this->cache)) {
+            return $this->cache[$resource];
         }
 
-        if (!$this->resources->has($resource)) {
+        if (!array_key_exists($resource, $this->resources)) {
             throw new ResourceNotImplemented($resource);
         }
 
-        $params = $this->resources->get($resource);
+        $params = $this->resources[$resource];
         $instance = $params['instance'];
 
         if (is_null($instance)) {
@@ -313,7 +305,7 @@ class RestClient
      * @param string|\Psr\Http\Message\UriInterface $uri URI object or string.
      * @param array $options Request options to apply.
      *
-     * @return ResponseInterface
+     * @return \GuzzleHttp\Promise\PromiseInterface|ResponseInterface
      * @throws ConnectException
      */
     private function requestHub($method, $uri, $options)
